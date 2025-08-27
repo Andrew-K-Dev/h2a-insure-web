@@ -86,32 +86,30 @@ export default function RegisterPage() {
           {/* PayPal Checkout */}
 <PayPalScriptProvider options={{ "client-id": "test", currency: "USD" }}>
   <PayPalButtons
-    style={{ layout: "vertical" }}
-    createOrder={(data, actions) => {
+  style={{ layout: "vertical" }}
+  createOrder={async (data, actions) => {
+    if (actions.order) {
       return actions.order.create({
         purchase_units: [
           {
             amount: {
-              value: "50.00", // ✅ Set registration fee here
+              value: "100.00", // replace with dynamic price if needed
             },
           },
         ],
       });
-    }}
-    onApprove={async (data, actions) => {
-  if (actions.order) {
-    await actions.order.capture();
+    }
+    return ""; // fallback for TypeScript
+  }}
+  onApprove={async (data, actions) => {
+    if (actions.order) {
+      await actions.order.capture();
+    }
     setPaymentSuccess(true);
     alert("✅ Payment successful! Receipt + Policy will be emailed.");
-  }
-}}
-
-    onCancel={() => {
-      alert("❌ Payment cancelled.");
-    }}
-    onError={(err) => {
-      console.error("PayPal error:", err);
-      alert("⚠️ Something went wrong with the payment.");
-    }}
-  />
-</PayPalScriptProvider>
+  }}
+  onError={(err) => {
+    console.error("PayPal Checkout Error:", err);
+    alert("❌ Payment failed. Please try again.");
+  }}
+/>
