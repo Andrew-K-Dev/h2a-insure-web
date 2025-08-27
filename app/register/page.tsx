@@ -12,6 +12,7 @@ export default function RegisterPage() {
   });
 
   const [submitted, setSubmitted] = useState(false);
+  const [paymentSuccess, setPaymentSuccess] = useState(false);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -25,16 +26,16 @@ export default function RegisterPage() {
       return;
     }
 
-    // ✅ Normally, you’d send this data to your backend here
     console.log("User Registered:", formData);
-
     setSubmitted(true);
   };
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen p-6 bg-gray-50">
       <h1 className="text-3xl font-bold mb-4">Register for H2A Insure</h1>
-      <p className="mb-6 text-gray-600">Affordable coverage for agricultural workers</p>
+      <p className="mb-6 text-gray-600">
+        Affordable coverage for agricultural workers
+      </p>
 
       {!submitted ? (
         <form
@@ -83,33 +84,39 @@ export default function RegisterPage() {
           </button>
 
           {/* PayPal Checkout */}
-          {/* PayPal Checkout */}
-<PayPalScriptProvider options={{ "client-id": "test", currency: "USD" }}>
-  <PayPalButtons
-  style={{ layout: "vertical" }}
-  createOrder={async (data, actions) => {
-    if (actions.order) {
-      return actions.order.create({
-        purchase_units: [
-          {
-            amount: {
-              value: "100.00", // replace with dynamic price if needed
-            },
-          },
-        ],
-      });
-    }
-    return ""; // fallback for TypeScript
-  }}
-  onApprove={async (data, actions) => {
-    if (actions.order) {
-      await actions.order.capture();
-    }
-    setPaymentSuccess(true);
-    alert("✅ Payment successful! Receipt + Policy will be emailed.");
-  }}
-  onError={(err) => {
-    console.error("PayPal Checkout Error:", err);
-    alert("❌ Payment failed. Please try again.");
-  }}
-/>
+          <PayPalScriptProvider options={{ "client-id": "test" }}>
+            <PayPalButtons
+              style={{ layout: "vertical" }}
+              createOrder={async (_data, actions) => {
+                return actions.order.create({
+                  purchase_units: [
+                    {
+                      amount: { value: "100.00" },
+                    },
+                  ],
+                });
+              }}
+              onApprove={async (_data, actions) => {
+                await actions.order?.capture();
+                setPaymentSuccess(true);
+                alert(
+                  "✅ Payment successful! Receipt + Policy will be emailed."
+                );
+              }}
+              onError={(err) => {
+                console.error("PayPal Checkout Error:", err);
+                alert("❌ Payment failed. Please try again.");
+              }}
+            />
+          </PayPalScriptProvider>
+
+          {paymentSuccess && (
+            <p className="mt-4 text-green-600 font-semibold">
+              Payment confirmed — thank you!
+            </p>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
