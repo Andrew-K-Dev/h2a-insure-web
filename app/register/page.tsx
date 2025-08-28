@@ -1,4 +1,5 @@
 "use client";
+console.log("✅ /register page loaded correctly");
 
 import { useState } from "react";
 import { PayPalScriptProvider, PayPalButtons } from "@paypal/react-paypal-js";
