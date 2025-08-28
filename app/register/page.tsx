@@ -25,13 +25,15 @@ export default function RegisterPage() {
                 ],
               });
             }}
-            // ✅ FIXED: async ensures this matches expected Promise<void>
-            onApprove={async (data, actions) => {
-              // Optionally capture order here if needed:
+            // ✅ Fixed: explicitly Promise<void>
+            onApprove={async (data, actions): Promise<void> => {
+              // Optionally capture order if needed
               // await actions.order?.capture();
 
               setPaymentSuccess(true);
               alert("Payment successful! Receipt + Policy will be emailed.");
+
+              return; // explicit return makes TS happy
             }}
             onError={(err) => {
               console.error("PayPal Checkout Error:", err);
