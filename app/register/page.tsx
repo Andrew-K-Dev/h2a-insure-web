@@ -1,122 +1,51 @@
 "use client";
 
 import { useState } from "react";
-import { PayPalButtons, PayPalScriptProvider } from "@paypal/react-paypal-js";
+import { PayPalScriptProvider, PayPalButtons } from "@paypal/react-paypal-js";
 
 export default function RegisterPage() {
-  const [formData, setFormData] = useState({
-    fullName: "",
-    email: "",
-    workerId: "",
-    contractLength: "9 months",
-  });
-
-  const [submitted, setSubmitted] = useState(false);
   const [paymentSuccess, setPaymentSuccess] = useState(false);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (!formData.fullName || !formData.email || !formData.workerId) {
-      alert("Please fill out all fields.");
-      return;
-    }
-
-    console.log("User Registered:", formData);
-    setSubmitted(true);
-  };
-
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen p-6 bg-gray-50">
-      <h1 className="text-3xl font-bold mb-4">Register for H2A Insure</h1>
-      <p className="mb-6 text-gray-600">
-        Affordable coverage for agricultural workers
-      </p>
+    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100 p-6">
+      <h1 className="text-3xl font-bold mb-6">Register & Pay</h1>
 
-      {!submitted ? (
-        <form
-          onSubmit={handleSubmit}
-          className="bg-white p-6 rounded-xl shadow-md w-full max-w-md space-y-4"
-        >
-          <input
-            type="text"
-            name="fullName"
-            placeholder="Full Name"
-            value={formData.fullName}
-            onChange={handleChange}
-            className="w-full border p-3 rounded-lg"
-          />
-          <input
-            type="email"
-            name="email"
-            placeholder="Email Address"
-            value={formData.email}
-            onChange={handleChange}
-            className="w-full border p-3 rounded-lg"
-          />
-          <input
-            type="text"
-            name="workerId"
-            placeholder="Worker ID / Passport #"
-            value={formData.workerId}
-            onChange={handleChange}
-            className="w-full border p-3 rounded-lg"
-          />
-
-          <button
-            type="submit"
-            className="w-full bg-green-600 text-white py-3 rounded-lg shadow-md"
-          >
-            Continue to Payment
-          </button>
-        </form>
-      ) : (
-        <div className="w-full max-w-md bg-white p-6 rounded-xl shadow-md">
-          <h2 className="text-xl font-bold mb-4">Payment Options</h2>
-
-          {/* Stripe Placeholder */}
-          <button className="w-full mb-4 px-6 py-3 bg-green-600 text-white rounded-xl shadow-md">
-            Pay with Stripe
-          </button>
-
-          {/* PayPal Checkout */}
-          <PayPalScriptProvider options={{ "client-id": "test" }}>
-            <PayPalButtons
-              style={{ layout: "vertical" }}
-              createOrder={async (_data, actions) => {
-                return actions.order.create({
-                  purchase_units: [
-                    {
-                      amount: { value: "100.00" },
+      <div className="w-full max-w-md bg-white shadow-lg rounded-lg p-6">
+        <PayPalScriptProvider options={{ "client-id": "YOUR_PAYPAL_CLIENT_ID" }}>
+          <PayPalButtons
+            style={{ layout: "vertical" }}
+            createOrder={(_, actions) => {
+              return actions.order.create({
+                purchase_units: [
+                  {
+                    amount: {
+                      value: "50.00", // registration fee
                     },
-                  ],
-                });
-              }}
-              onApprove={async (_data, actions) => {
-                await actions.order?.capture();
-                setPaymentSuccess(true);
-                alert(
-                  "✅ Payment successful! Receipt + Policy will be emailed."
-                );
-              }}
-              onError={(err) => {
-                console.error("PayPal Checkout Error:", err);
-                alert("❌ Payment failed. Please try again.");
-              }}
-            />
-          </PayPalScriptProvider>
+                  },
+                ],
+              });
+            }}
+            // ✅ FIXED: async ensures this matches expected Promise<void>
+            onApprove={async (data, actions) => {
+              // Optionally capture order here if needed:
+              // await actions.order?.capture();
 
-          {paymentSuccess && (
-            <p className="mt-4 text-green-600 font-semibold">
-              Payment confirmed — thank you!
-            </p>
-          )}
-        </div>
-      )}
+              setPaymentSuccess(true);
+              alert("Payment successful! Receipt + Policy will be emailed.");
+            }}
+            onError={(err) => {
+              console.error("PayPal Checkout Error:", err);
+              alert("An error occurred during payment. Please try again.");
+            }}
+          />
+        </PayPalScriptProvider>
+
+        {paymentSuccess && (
+          <p className="mt-4 text-green-600 font-semibold">
+            ✅ Registration complete! Check your email for the policy.
+          </p>
+        )}
+      </div>
     </div>
   );
 }
