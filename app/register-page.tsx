@@ -4,89 +4,50 @@ import { useState } from "react";
 import { PayPalScriptProvider, PayPalButtons } from "@paypal/react-paypal-js";
 
 export default function RegisterPage() {
-  const [form, setForm] = useState({
-    firstName: "",
-    lastName: "",
-    email: "",
-    language: "en", // default English
-  });
-
   const [paymentSuccess, setPaymentSuccess] = useState(false);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
-  };
-
   return (
-    <main style={{ fontFamily: "Arial, sans-serif", padding: "40px" }}>
-      <h1>{form.language === "en" ? "Register for H2A Insure" : "Regístrese en H2A Insure"}</h1>
+    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100 p-6">
+      <h1 className="text-3xl font-bold mb-6">Register & Pay</h1>
 
-      {!paymentSuccess ? (
-        <>
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              alert("Form submitted! (Later: save to database + generate PDF policy)");
+      <div className="w-full max-w-md bg-white shadow-lg rounded-lg p-6">
+        <PayPalScriptProvider options={{ "client-id": "YOUR_PAYPAL_CLIENT_ID" }}>
+          <PayPalButtons
+            style={{ layout: "vertical" }}
+            createOrder={(_, actions) => {
+              return actions.order.create({
+                purchase_units: [
+                  {
+                    amount: {
+                      value: "50.00", // registration fee
+                    },
+                  },
+                ],
+              });
             }}
-            style={{ display: "flex", flexDirection: "column", maxWidth: "400px", gap: "10px" }}
-          >
-            <label>
-              {form.language === "en" ? "First Name:" : "Nombre:"}
-              <input type="text" name="firstName" value={form.firstName} onChange={handleChange} required />
-            </label>
+            // ✅ Fixed: explicitly Promise<void>
+            onApprove={async (data, actions): Promise<void> => {
+              // Optionally capture order if needed
+              // await actions.order?.capture();
 
-            <label>
-              {form.language === "en" ? "Last Name:" : "Apellido:"}
-              <input type="text" name="lastName" value={form.lastName} onChange={handleChange} required />
-            </label>
+              setPaymentSuccess(true);
+              alert("Payment successful! Receipt + Policy will be emailed.");
 
-            <label>
-              Email:
-              <input type="email" name="email" value={form.email} onChange={handleChange} required />
-            </label>
+              return; // explicit return makes TS happy
+            }}
+            onError={(err) => {
+              console.error("PayPal Checkout Error:", err);
+              alert("An error occurred during payment. Please try again.");
+            }}
+          />
+        </PayPalScriptProvider>
 
-            <label>
-              Language / Idioma:
-              <select name="language" value={form.language} onChange={handleChange}>
-                <option value="en">English</option>
-                <option value="es">Español</option>
-              </select>
-            </label>
-
-            <button type="submit" style={{ padding: "10px", marginTop: "10px" }}>
-              {form.language === "en" ? "Submit Info" : "Enviar Información"}
-            </button>
-          </form>
-
-          <h2 style={{ marginTop: "40px" }}>
-            {form.language === "en" ? "Pay $100/month (9 months)" : "Pague $100/mes (9 meses)"}
-          </h2>
-
-          {/* PayPal Integration */}
-          <PayPalScriptProvider options={{ "client-id": "paypal.me/AndrewKotze691" }}>
-            <PayPalButtons
-              style={{ layout: "vertical" }}
-              createSubscription={(data, actions) => {
-                return actions.subscription.create({
-                  plan_id: "P-XXXXXX", // replace with real PayPal subscription plan ID
-                });
-              }}
-              onApprove={(data, actions) => {
-                setPaymentSuccess(true);
-                alert("Payment successful! Receipt + Policy will be emailed.");
-              }}
-            />
-          </PayPalScriptProvider>
-
-          {/* TODO: Add Stripe Checkout later */}
-        </>
-      ) : (
-        <h2 style={{ color: "green" }}>
-          {form.language === "en"
-            ? "Thank you! Your coverage is active."
-            : "¡Gracias! Su cobertura está activa."}
-        </h2>
-      )}
-    </main>
+        {paymentSuccess && (
+          <p className="mt-4 text-green-600 font-semibold">
+            ✅ Registration complete! Check your email for the policy.
+          </p>
+        )}
+      </div>
+    </div>
   );
 }
